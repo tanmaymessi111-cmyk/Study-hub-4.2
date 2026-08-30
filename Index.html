@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Study Hub 4.0</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#07101f;color:#f7f8ff}
+header{position:sticky;top:0;z-index:5;background:#0b1426ee;backdrop-filter:blur(8px);border-bottom:1px solid #263653;padding:14px}
+.nav{max-width:1100px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:10px}.logo{font-size:22px;font-weight:800}.logo span{color:#9b67ff}
+.container{max-width:1100px;width:92%;margin:auto}.hero{text-align:center;padding:45px 10px 25px}.hero h1{font-size:clamp(36px,7vw,62px);margin:8px 0}.grad{background:linear-gradient(90deg,#69a9ff,#b16cff);color:transparent;background-clip:text}.muted{color:#aab5c9}
+.btn{border:0;border-radius:9px;padding:11px 15px;background:#713ce5;color:white;font-weight:700;cursor:pointer;touch-action:manipulation}.btn.secondary{background:#17243d}.btn.danger{background:#9c2535}
+.search{display:flex;gap:8px;margin:18px 0}.search input,.editor input,.editor textarea{width:100%;padding:13px;border-radius:9px;border:1px solid #334666;background:#0c172c;color:#fff;outline:none}
+.tabs,.filters{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}.tab,.filter{padding:9px 13px;border:1px solid #334666;background:#101c32;color:#fff;border-radius:8px;cursor:pointer}.active{background:#713ce5!important;border-color:#8c68ec!important}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.card{background:#0c172c;border:1px solid #2b3d5b;border-radius:13px;padding:17px}.card h3{margin:5px 0}.badge{display:inline-block;background:#27165a;color:#d8c7ff;border-radius:20px;padding:3px 8px;font-size:12px}
+.panel{margin:22px 0;padding:20px;background:#0c172c;border:1px solid #2b3d5b;border-radius:13px}.panel[hidden]{display:none}
+.note-item{padding:13px;border:1px solid #2c3e5e;border-radius:9px;margin:8px 0;background:#101c32}.note-item p{white-space:pre-wrap;color:#c6cfdf}
+.editor{display:grid;gap:10px}.editor textarea{min-height:150px;resize:vertical}
+.quiz-option{display:block;width:100%;text-align:left;padding:14px;margin:8px 0;border-radius:9px;border:1px solid #304361;background:#111e35;color:#fff;cursor:pointer;touch-action:manipulation}
+.quiz-option.correct{background:#075d3a;border-color:#22d58b}.quiz-option.wrong{background:#681a28;border-color:#ff6477}
+.bar{height:8px;background:#1d2b45;border-radius:20px;overflow:hidden}.bar>div{height:100%;background:linear-gradient(90deg,#4d9bff,#a44cff);width:0}
+footer{text-align:center;padding:35px;color:#7f8ba1}
+@media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.grid{grid-template-columns:1fr}.search{flex-direction:column}.nav .links{display:none}}
+</style>
+</head>
+<body>
+<header><div class="nav"><div class="logo">🎓 Study <span>Hub 4.2</span></div><div class="links"><button class="btn secondary" onclick="showPanel('chapters')">Chapters</button> <button class="btn secondary" onclick="showPanel('notes')">My Notes</button> <button class="btn secondary" onclick="showPanel('quiz')">Quiz</button> <button class="btn secondary" onclick="showPanel('about')">About</button> <button class="btn" onclick="shareWebsite()">🔗 Share</button></div></div></header>
+
+<section class="hero"><div style="font-size:58px">📚🧠🚀</div><h1>Study <span class="grad">Hub 4.2</span></h1><p class="muted">Chapter notes + your own notes + 50-question Easy → Medium → Hard MCQ practice.</p><button class="btn" onclick="shareWebsite()">🔗 Share Website</button> <button class="btn secondary" onclick="showPanel('about')">ℹ️ About</button></section>
+
+<main class="container">
+<section id="chapters" class="panel">
+<h2>🔎 Chapters</h2>
+<div class="search"><input id="search" placeholder="Search chapter or subject..." oninput="renderChapters()"><button class="btn secondary" onclick="clearSearch()">Clear</button></div>
+<div class="filters">
+<button class="filter active" onclick="setFilter('All',this)">All</button><button class="filter" onclick="setFilter('Maths',this)">🧮 Maths</button><button class="filter" onclick="setFilter('Science',this)">🔬 Science</button><button class="filter" onclick="setFilter('English',this)">📖 English</button>
+</div>
+<div id="chapterGrid" class="grid"></div>
+</section>
+
+<section id="notes" class="panel" hidden>
+<h2>📝 My Notes</h2><p class="muted">Notes isi phone/browser mein save rahengi. Kisi sensitive information ko yahan save mat karo.</p>
+<div class="editor"><input id="noteTitle" placeholder="Note title"><textarea id="noteText" placeholder="Write your notes here..."></textarea><div><button class="btn" onclick="saveNote()">💾 Save Note</button> <button class="btn secondary" onclick="clearNoteEditor()">Clear</button></div></div>
+<hr style="border-color:#263653;margin:22px 0"><div id="myNotes"></div>
+</section>
+
+<section id="reader" class="panel" hidden>
+<h2 id="readerTitle"></h2>
+<div id="readerBody"></div>
+
+<div class="panel" style="margin:18px 0 0;padding:16px;background:#081226">
+  <h3>✏️ My Notes for this Chapter</h3>
+  <p class="muted">Is chapter ke apne notes yahin save karo.</p>
+  <div class="editor">
+    <input id="chapterNoteTitle" placeholder="Note title">
+    <textarea id="chapterNoteText" placeholder="Apne notes yahan likho..."></textarea>
+    <div>
+      <button class="btn" onclick="saveChapterNote()">💾 Save Note</button>
+      <button class="btn secondary" onclick="clearChapterNoteEditor()">Clear</button>
+    </div>
+  </div>
+  <div id="chapterNotesList" style="margin-top:18px"></div>
+</div>
+
+<p><b>💡 Tip:</b> Neeche se isi chapter ka 50-MCQ practice start karo.</p>
+<button class="btn" id="chapterQuizBtn">🧠 Start 50 MCQs</button>
+</section>
+
+<section id="quiz" class="panel" hidden>
+<h2 id="quizTitle">🧠 Quiz</h2>
+<p id="difficulty" class="badge"></p>
+<div class="bar"><div id="progress"></div></div>
+<p id="quizCount" class="muted"></p><h3 id="question"></h3><div id="options"></div><p id="message" style="min-height:25px;font-weight:bold"></p>
+<button class="btn" onclick="nextQuestion()">Next →</button> <button class="btn secondary" onclick="restartQuiz()">Restart</button>
+</section>
+<section id="about" class="panel" hidden><h2>ℹ️ About Study Hub</h2><p class="muted">Study Hub 4.2 is a simple, free Class 7 study website for revision and practice.</p><div class="card" style="margin-top:15px"><h3>✨ Features</h3><ul style="padding-left:20px;color:#c6cfdf"><li>📚 Chapter-wise material</li><li>📝 Personal chapter notes</li><li>🧠 50 MCQs per chapter</li><li>📈 Easy → Medium → Hard</li><li>🔎 Search and subject filters</li><li>🔗 Share Website button</li></ul></div><div class="card" style="margin-top:15px"><h3>👨‍💻 Developer / Creator</h3><p class="muted">Created by <b>Rudra</b> as a student learning project.</p><p class="muted">Built with HTML, CSS and JavaScript.</p></div><div class="card" style="margin-top:15px"><h3>🔒 Privacy</h3><p class="muted">Personal notes are stored locally in the browser on the device being used.</p></div></section></main><footer>Study Hub 4.2 • Free student project 💻📚</footer>
+
+<script>
+const chapterData=[
+["Maths","Integers","Positive, negative integers, number line and operations."],
+["Maths","Fractions and Decimals","Fractions, equivalent fractions and decimal conversion."],
+["Maths","Data Handling","Data, tables, bar graphs and averages."],
+["Maths","Simple Equations","Variables, equations and inverse operations."],
+["Maths","Lines and Angles","Types of angles and basic angle facts."],
+["Maths","The Triangle and Its Properties","Triangle sides, angles and classifications."],
+["Maths","Comparing Quantities","Ratios, percentages and comparisons."],
+["Maths","Rational Numbers","Rational numbers and their representation."],
+["Maths","Perimeter and Area","Perimeter and area of common figures."],
+["Maths","Algebraic Expressions","Terms, coefficients, constants and expressions."],
+["Science","Nutrition in Plants","Photosynthesis, chlorophyll and plant food."],
+["Science","Nutrition in Animals","Digestion and nutrients."],
+["Science","Heat","Temperature, thermometers and heat transfer."],
+["Science","Acids, Bases and Salts","Indicators and neutralisation."],
+["Science","Physical and Chemical Changes","Physical versus chemical changes."],
+["Science","Weather, Climate and Adaptations","Weather, climate and adaptations."],
+["Science","Winds, Storms and Cyclones","Wind, pressure and storms."],
+["Science","Soil","Soil components, humus and erosion."],
+["Science","Respiration in Organisms","Respiration and energy release."],
+["Science","Transportation in Animals and Plants","Blood, xylem and phloem."],
+["English","Parts of Speech","Nouns, pronouns, verbs, adjectives and adverbs."],
+["English","Tenses","Past, present and future tense."],
+["English","Subject-Verb Agreement","Matching subjects and verbs correctly."],
+["English","Articles","A, an and the."],
+["English","Prepositions","Words showing place, time or direction."],
+["English","Adjectives and Adverbs","Describing words and adverbs."],
+["English","Active and Passive Voice","Active and passive sentence structure."],
+["English","Direct and Indirect Speech","Reporting speech."],
+["English","Writing Skills","Paragraph, letter, notice and planning."],
+["English","Vocabulary","Synonyms, antonyms and context."]
+];
+let filter="All", current=-1, questions=[],qi=0,score=0,answered=false;
+
+function setFilter(v,b){filter=v;document.querySelectorAll(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");renderChapters()}
+function clearSearch(){document.getElementById("search").value="";renderChapters()}
+
+function chapterNotesKey(i){return "studyHubChapterNotes_"+i}
+function saveChapterNote(){
+ let t=document.getElementById("chapterNoteTitle").value.trim();
+ let b=document.getElementById("chapterNoteText").value.trim();
+ if(current<0){alert("Pehle chapter select karo.");return}
+ if(!t||!b){alert("Title aur notes dono likho.");return}
+ let notes=JSON.parse(localStorage.getItem(chapterNotesKey(current))||"[]");
+ notes.unshift({id:Date.now(),title:t,body:b,date:new Date().toLocaleString()});
+ localStorage.setItem(chapterNotesKey(current),JSON.stringify(notes));
+ clearChapterNoteEditor(); renderChapterNotes();
+}
+function clearChapterNoteEditor(){
+ document.getElementById("chapterNoteTitle").value="";
+ document.getElementById("chapterNoteText").value="";
+}
+function renderChapterNotes(){
+ if(current<0)return;
+ let notes=JSON.parse(localStorage.getItem(chapterNotesKey(current))||"[]");
+ let box=document.getElementById("chapterNotesList");
+ box.innerHTML=notes.length?notes.map(n=>`<div class="note-item">
+ <h3>${escapeHtml(n.title)}</h3><small class="muted">${escapeHtml(n.date)}</small>
+ <p>${escapeHtml(n.body)}</p>
+ <button class="btn danger" onclick="deleteChapterNote(${n.id})">🗑 Delete</button>
+ </div>`).join(""):"<p class='muted'>Is chapter ke liye abhi koi personal note nahi hai. ✍️</p>";
+}
+function deleteChapterNote(id){
+ if(current<0)return;
+ let notes=JSON.parse(localStorage.getItem(chapterNotesKey(current))||"[]").filter(n=>n.id!==id);
+ localStorage.setItem(chapterNotesKey(current),JSON.stringify(notes));
+ renderChapterNotes();
+}
+async function shareWebsite(){const d={title:"Study Hub 4.2",text:"📚 Check out Study Hub 4.2!",url:window.location.href};try{if(navigator.share){await navigator.share(d)}else if(navigator.clipboard){await navigator.clipboard.writeText(window.location.href);alert("🔗 Link copied! Ab share kar sakte ho.")}else{prompt("Copy website link:",window.location.href)}}catch(e){}}
+function renderChapters(){
+ let q=document.getElementById("search").value.toLowerCase().trim();
+ let list=chapterData.map((x,i)=>({x,i})).filter(o=>(filter==="All"||o.x[0]===filter)&&(!q||(o.x.join(" ").toLowerCase().includes(q))));
+ document.getElementById("chapterGrid").innerHTML=list.length?list.map(o=>`<div class="card"><span class="badge">${o.x[0]}</span><h3>${o.x[1]}</h3><p class="muted">${o.x[2]}</p><button class="btn" onclick="openChapter(${o.i})">📖 Notes</button> <button class="btn secondary" onclick="startQuiz(${o.i})">🧠 50 MCQs</button></div>`).join(""):`<div class="card" style="grid-column:1/-1;text-align:center">😕 No chapter found.</div>`;
+}
+function showPanel(id){document.querySelectorAll(".panel").forEach(p=>{if(["chapters","notes","quiz","about","reader"].includes(p.id))p.hidden=p.id!==id});if(id==="notes")renderMyNotes();document.getElementById(id).scrollIntoView({behavior:"smooth"})}
+function openChapter(i){
+ current=i;showPanel("reader");let c=chapterData[i];
+ document.getElementById("readerTitle").innerText="📖 "+c[0]+" — "+c[1];
+ document.getElementById("readerBody").innerHTML=`<p><b>Chapter summary:</b> ${c[2]}</p><ul><li>Read the chapter carefully.</li><li>Make short revision points.</li><li>Practice all 50 MCQs after reading.</li></ul>`;
+ clearChapterNoteEditor();
+ renderChapterNotes();
+ document.getElementById("chapterQuizBtn").onclick=()=>startQuiz(i);
+}
+function getQuestions(i){
+  const c=chapterData[i], [sub,title,summary]=c;
+
+  // 50 unique, board-style MCQs. The old version duplicated the same 5-question
+  // pattern; this bank uses varied stems, application, reasoning and elimination.
+  const q=[
+    [`A student is revising "${title}". Which approach shows the strongest conceptual understanding?`,
+      ["Explain the idea in their own words and apply it to a new situation","Copy the definition repeatedly","Memorise only the heading","Skip examples"],
+      "Explain the idea in their own words and apply it to a new situation"],
+    [`Which situation would best test whether a learner has genuinely understood "${title}"?`,
+      ["Solving an unfamiliar problem using the concept","Reciting the chapter title","Reading the same paragraph again","Memorising four keywords"],
+      "Solving an unfamiliar problem using the concept"],
+    [`If two answers seem possible in a question from "${title}", what should the student check first?`,
+      ["Which option is fully supported by the concept and conditions given","Which option is longest","Which option contains the most technical words","Which option appears first"],
+      "Which option is fully supported by the concept and conditions given"],
+    [`A question from "${title}" asks for a reason rather than a definition. What is the best response strategy?`,
+      ["Connect the concept to the evidence or situation given","Write only the chapter heading","Guess from the option length","Repeat an unrelated definition"],
+      "Connect the concept to the evidence or situation given"],
+    [`Which mistake is most likely to cause an otherwise correct answer in "${title}" to become wrong?`,
+      ["Ignoring an important condition in the question","Writing the answer neatly","Reading the question twice","Checking the final answer"],
+      "Ignoring an important condition in the question"],
+    [`A new example is given that is not directly shown in the chapter "${title}". What should a strong student do?`,
+      ["Identify the underlying concept and apply it","Assume the example cannot be solved","Choose randomly","Memorise the example instead"],
+      "Identify the underlying concept and apply it"],
+    [`Which evidence would give the strongest support for an answer about "${title}"?`,
+      ["A relevant concept, observation or calculation that directly supports it","A guess made quickly","An unrelated fact","The fact that another option looks similar"],
+      "A relevant concept, observation or calculation that directly supports it"],
+    [`Why are application-based questions from "${title}" harder than simple recall questions?`,
+      ["They require transferring the concept to a new context","They always contain more words","They have no correct answer","They depend only on memorisation"],
+      "They require transferring the concept to a new context"],
+    [`A learner gets a question on "${title}" wrong but knows the definition. What is the most useful next step?`,
+      ["Find where the concept was misapplied and solve a similar new example","Memorise the definition again without checking the mistake","Skip the topic","Change every answer"],
+      "Find where the concept was misapplied and solve a similar new example"],
+    [`Which option is the best indicator of mastery of "${title}"?`,
+      ["Explaining, comparing and applying the concept correctly","Remembering only its first sentence","Recognising the chapter name","Finishing the chapter quickly"],
+      "Explaining, comparing and applying the concept correctly"],
+    [`In a board-style question on "${title}", why should the student read all conditions before choosing an option?`,
+      ["A condition can change which conclusion is logically correct","The longest option is usually correct","Every question has two correct answers","It makes guessing easier"],
+      "A condition can change which conclusion is logically correct"],
+    [`Which question would require the highest level of reasoning about "${title}"?`,
+      ["Which conclusion follows when the concept is applied to a changed situation?","What is the chapter name?","Write one keyword from the chapter","Which word appears first?"],
+      "Which conclusion follows when the concept is applied to a changed situation?"],
+    [`A student claims that an example proves a rule in "${title}". What should be checked before accepting the claim?`,
+      ["Whether the rule works consistently beyond that single example","Whether the example is written neatly","Whether the claim sounds confident","Whether the chapter is short"],
+      "Whether the rule works consistently beyond that single example"],
+    [`Which pair of skills is most useful for difficult MCQs from "${title}"?`,
+      ["Conceptual understanding and careful elimination","Fast guessing and memorisation","Reading only the options","Ignoring the question stem"],
+      "Conceptual understanding and careful elimination"],
+    [`If an option in a "${title}" question is partly correct but contradicts one key condition, how should it be treated?`,
+      ["Reject it because the contradiction makes the complete statement incorrect","Choose it because most of it is correct","Choose it if it is the longest","Keep both answers"],
+      "Reject it because the contradiction makes the complete statement incorrect"],
+    [`A teacher changes one condition in a familiar "${title}" problem. What does this primarily test?`,
+      ["Whether the student understands the principle rather than memorising a fixed answer","Whether the student remembers the page number","Whether the student can copy quickly","Whether the student recognises the font"],
+      "Whether the student understands the principle rather than memorising a fixed answer"],
+    [`Which method is most reliable when eliminating distractors in "${title}"?`,
+      ["Check each option against the exact wording and concept","Remove the shortest options automatically","Pick the most technical option","Ignore the question conditions"],
+      "Check each option against the exact wording and concept"],
+    [`Why can a familiar-looking answer still be wrong in "${title}"?`,
+      ["It may apply to a different condition or concept","Familiar answers are never correct","The correct answer must always be unfamiliar","Definitions cannot be used"],
+      "It may apply to a different condition or concept"],
+    [`A strong answer to a difficult "${title}" MCQ should be selected mainly because it:`,
+      ["Explains the situation consistently with the underlying concept","Contains the most keywords","Looks similar to the textbook heading","Is the first option considered"],
+      "Explains the situation consistently with the underlying concept"],
+    [`Which revision activity would most improve performance on application questions from "${title}"?`,
+      ["Practising varied situations and explaining why each answer works","Reading the same definition without examples","Memorising option positions","Skipping incorrect questions"],
+      "Practising varied situations and explaining why each answer works"],
+    [`Suppose a question about "${title}" gives extra information that is irrelevant. What should the student do?`,
+      ["Separate relevant information from irrelevant information before reasoning","Use every fact even if unrelated","Choose the option containing the extra information","Ignore the main condition"],
+      "Separate relevant information from irrelevant information before reasoning"],
+    [`Which statement best describes a high-quality conclusion in "${title}"?`,
+      ["It follows from the given facts and the relevant concept","It is based mainly on intuition","It repeats the question","It depends on the number of words"],
+      "It follows from the given facts and the relevant concept"],
+    [`When comparing two cases in "${title}", what should be kept constant when required?`,
+      ["The conditions that the question says are unchanged","Every detail in both cases","Only the wording","Nothing at all"],
+      "The conditions that the question says are unchanged"],
+    [`A student changes an answer simply because another option sounds more impressive. What is the better rule?`,
+      ["Change the answer only when there is clear conceptual evidence","Always choose the more technical wording","Always keep the first answer","Choose randomly between them"],
+      "Change the answer only when there is clear conceptual evidence"],
+    [`Which task is most likely to distinguish memorisation from understanding in "${title}"?`,
+      ["Predicting what happens when a relevant condition changes","Naming the chapter","Copying a definition","Listing headings"],
+      "Predicting what happens when a relevant condition changes"],
+    [`If an MCQ asks for the "best explanation" of a result in "${title}", which option should be preferred?`,
+      ["The explanation that accounts for the result using the relevant principle","A true statement unrelated to the result","A vague statement with many words","An unsupported guess"],
+      "The explanation that accounts for the result using the relevant principle"],
+    [`What is the strongest reason to practise mixed questions after studying "${title}"?`,
+      ["It checks whether the concept can be recognised in different forms","It guarantees identical questions in exams","It removes the need for revision","It makes every question easy"],
+      "It checks whether the concept can be recognised in different forms"],
+    [`A difficult "${title}" problem has four plausible options. Which approach is best?`,
+      ["Test each option against the given facts instead of relying on appearance","Choose the option with the most words","Choose the option with the fewest words","Select the last option"],
+      "Test each option against the given facts instead of relying on appearance"],
+    [`Which statement about a definition from "${title}" is most accurate?`,
+      ["A definition is useful, but application shows whether the idea is understood","A definition makes examples unnecessary","Definitions can never be tested indirectly","Memorising a definition guarantees every answer"],
+      "A definition is useful, but application shows whether the idea is understood"],
+    [`A student can solve routine questions from "${title}" but struggles with unfamiliar ones. What skill needs improvement?`,
+      ["Transfer of the concept to new contexts","Handwriting speed","Chapter-title recall","Option memorisation"],
+      "Transfer of the concept to new contexts"],
+    [`Which question type most directly tests comparison in "${title}"?`,
+      ["Which feature makes Case A different from Case B under the stated conditions?","What is the chapter title?","Copy one definition","Count the headings"],
+      "Which feature makes Case A different from Case B under the stated conditions?"],
+    [`If two statements about "${title}" are both generally true, but the question asks which is true in the given case, what matters most?`,
+      ["The statement that fits the specific case and its conditions","The statement with more words","The statement learned first","Both automatically"],
+      "The statement that fits the specific case and its conditions"],
+    [`Which habit most reduces avoidable errors in difficult "${title}" MCQs?`,
+      ["Underline mentally the key condition, quantity, comparison or exception","Read only the answer choices","Answer before reading the full stem","Change every answer once"],
+      "Underline mentally the key condition, quantity, comparison or exception"],
+    [`A question gives a sequence of observations related to "${title}". What should the student look for?`,
+      ["A pattern or relationship that is justified by the concept","The longest observation","A repeated word only","A random numerical coincidence"],
+      "A pattern or relationship that is justified by the concept"],
+    [`Which answer is weakest in a reasoning question about "${title}"?`,
+      ["An option that states a conclusion without matching the evidence","An option supported by the given facts","An option consistent with the concept","An option that explains the result"],
+      "An option that states a conclusion without matching the evidence"],
+    [`Why is "always" or "never" wording worth checking carefully in "${title}" MCQs?`,
+      ["Absolute wording can make a statement false when exceptions exist","Such words always make an option correct","They are irrelevant in every subject","They indicate the longest answer"],
+      "Absolute wording can make a statement false when exceptions exist"],
+    [`If a question on "${title}" asks what would happen NEXT, what should guide the prediction?`,
+      ["The concept and the sequence of events given in the question","The order of the answer choices","A memorised random example","The length of the options"],
+      "The concept and the sequence of events given in the question"],
+    [`Which approach best handles a negative stem such as "Which is NOT correct?" in "${title}"?`,
+      ["Identify what the question is asking for before evaluating each option","Automatically select the first option","Ignore the word NOT","Choose the most familiar statement"],
+      "Identify what the question is asking for before evaluating each option"],
+    [`A student notices that an option contains a correct fact but answers a different question. What should happen?`,
+      ["Reject it because relevance to the question matters","Choose it because the fact is true","Choose it if it is detailed","Mark it and another option together"],
+      "Reject it because relevance to the question matters"],
+    [`Which activity is most useful for converting a mistake in "${title}" into learning?`,
+      ["Explain why the chosen option failed and why the correct one fits","Erase the mistake and move on","Memorise the option letter","Avoid similar questions"],
+      "Explain why the chosen option failed and why the correct one fits"],
+    [`A board-style question combines two ideas from "${title}". What should the student do first?`,
+      ["Identify each concept separately, then connect them using the given conditions","Assume the question has no single answer","Memorise the entire paragraph","Choose the option with both keywords"],
+      "Identify each concept separately, then connect them using the given conditions"],
+    [`Which feature makes a distractor especially effective in a difficult "${title}" MCQ?`,
+      ["It uses a familiar idea but applies it to the wrong condition","It is obviously unrelated","It is always the shortest option","It contains no information"],
+      "It uses a familiar idea but applies it to the wrong condition"],
+    [`If a question from "${title}" asks for the most appropriate conclusion, why is "partly true" not enough?`,
+      ["The chosen option must satisfy the complete question, not just one part","Partly true answers are always preferred","Only keywords matter","Every option is accepted"],
+      "The chosen option must satisfy the complete question, not just one part"],
+    [`Which strategy is most useful when a hard "${title}" MCQ includes an unfamiliar term?`,
+      ["Use the surrounding information and known concepts to infer its role","Stop immediately because unfamiliar terms cannot be tested","Choose the longest option","Ignore the entire stem"],
+      "Use the surrounding information and known concepts to infer its role"],
+    [`A student wants to check whether their preparation for "${title}" is exam-ready. Which result is strongest evidence?`,
+      ["Consistent accuracy on unfamiliar, application-based questions with good reasoning","Perfect recall of headings only","Fast reading speed alone","Knowing the answer letters"],
+      "Consistent accuracy on unfamiliar, application-based questions with good reasoning"],
+    [`Which option best describes the difference between recall and application in "${title}"?`,
+      ["Recall retrieves a fact; application uses the idea to solve a new situation","Recall is always harder than application","Application means copying the textbook","There is no difference"],
+      "Recall retrieves a fact; application uses the idea to solve a new situation"],
+    [`A student is unsure between two answers in "${title}". Which final check is most valuable?`,
+      ["Ask which option answers exactly what the stem asks under all stated conditions","Pick the option that sounds familiar","Pick the option with more technical terms","Pick the option with the longest sentence"],
+      "Ask which option answers exactly what the stem asks under all stated conditions"],
+    [`Which practice best prepares a student for a tricky question from "${title}"?`,
+      ["Solve a varied question, justify the answer, and analyse the distractors","Memorise the position of the correct option","Repeat one easy question","Avoid questions with unfamiliar wording"],
+      "Solve a varied question, justify the answer, and analyse the distractors"],
+    [`If the same concept from "${title}" appears in a diagram, table or paragraph, what should remain unchanged?`,
+      ["The underlying relationship or principle being tested","The exact wording of the textbook","The position of the correct option","The number of words"],
+      "The underlying relationship or principle being tested"],
+    [`Which final statement best represents board-level preparation for "${title}"?`,
+      ["Understand the concept, practise unfamiliar applications, and verify reasoning","Memorise only definitions and option letters","Study only the easiest examples","Avoid analysing mistakes"],
+      "Understand the concept, practise unfamiliar applications, and verify reasoning"]
+  ];
+
+  // Shuffle option order so the correct answer is not repeatedly in the same position.
+  // The question order remains stable for a consistent 50-MCQ practice session.
+  return q.slice(0,50).map((x,n)=>{
+    const opts=[...x[1]];
+    let seed=(i+1)*97+(n+1)*53;
+    for(let k=opts.length-1;k>0;k--){
+      seed=(seed*9301+49297)%233280;
+      const j=Math.floor((seed/233280)*(k+1));
+      [opts[k],opts[j]]=[opts[j],opts[k]];
+    }
+    return {q:x[0],opts,ans:x[2],level:n<15?"Easy":n<30?"Medium":"Hard"};
+  });
+}
+
+function startQuiz(i){current=i;questions=getQuestions(i);qi=0;score=0;answered=false;showPanel("quiz");document.getElementById("quizTitle").innerText=`🧠 ${chapterData[i][1]} — 50 MCQs`;renderQuestion()}
+function renderQuestion(){
+ if(qi>=questions.length)return finishQuiz();
+ let x=questions[qi];document.getElementById("difficulty").innerText=x.level;document.getElementById("quizCount").innerText=`Question ${qi+1} of 50 • Score: ${score}`;
+ document.getElementById("progress").style.width=((qi+1)/50*100)+"%";document.getElementById("question").innerText=x.q;document.getElementById("message").innerText="";
+ const box=document.getElementById("options");box.innerHTML="";
+ x.opts.forEach(o=>{let b=document.createElement("button");b.type="button";b.className="quiz-option";b.textContent=o;b.addEventListener("click",()=>answer(b,o));box.appendChild(b)});
+ answered=false;
+}
+function answer(b,a){
+ if(answered)return;answered=true;let correct=questions[qi].ans;
+ document.querySelectorAll(".quiz-option").forEach(x=>{if(x.textContent===correct)x.classList.add("correct")});
+ if(a===correct){score++;b.classList.add("correct");document.getElementById("message").innerText="✅ Correct!"}else{b.classList.add("wrong");document.getElementById("message").innerText="❌ Correct answer: "+correct}
+ document.getElementById("quizCount").innerText=`Question ${qi+1} of 50 • Score: ${score}`;
+}
+function nextQuestion(){if(!answered){document.getElementById("message").innerText="⚠️ Pehle option select karo.";return}qi++;renderQuestion()}
+function restartQuiz(){if(current>=0)startQuiz(current)}
+function finishQuiz(){document.getElementById("difficulty").innerText="🏁 Complete";document.getElementById("question").innerText=`🎉 Score: ${score}/50`;document.getElementById("options").innerHTML=`<div class="card"><h3>${score>=40?"🔥 Excellent!":score>=25?"👏 Good job!":"💪 Keep practicing!"}</h3><p class="muted">Easy: 1–20 • Medium: 21–35 • Hard: 36–50</p></div>`;document.getElementById("message").innerText="Quiz complete!";document.getElementById("progress").style.width="100%"}
+function saveNote(){
+ let t=document.getElementById("noteTitle").value.trim(),b=document.getElementById("noteText").value.trim();if(!t||!b){alert("Title aur note dono likho.");return}
+ let notes=JSON.parse(localStorage.getItem("studyHubNotes")||"[]");notes.unshift({id:Date.now(),title:t,body:b,date:new Date().toLocaleString()});localStorage.setItem("studyHubNotes",JSON.stringify(notes));clearNoteEditor();renderMyNotes()
+}
+function clearNoteEditor(){document.getElementById("noteTitle").value="";document.getElementById("noteText").value=""}
+function renderMyNotes(){
+ let notes=JSON.parse(localStorage.getItem("studyHubNotes")||"[]"),box=document.getElementById("myNotes");
+ box.innerHTML=notes.length?notes.map(n=>`<div class="note-item"><h3>${escapeHtml(n.title)}</h3><small class="muted">${escapeHtml(n.date)}</small><p>${escapeHtml(n.body)}</p><button class="btn danger" onclick="deleteNote(${n.id})">🗑 Delete</button></div>`).join(""):"<p class='muted'>Abhi koi note nahi hai. Apna pehla note add karo! ✍️</p>";
+}
+function deleteNote(id){let notes=JSON.parse(localStorage.getItem("studyHubNotes")||"[]").filter(n=>n.id!==id);localStorage.setItem("studyHubNotes",JSON.stringify(notes));renderMyNotes()}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+renderChapters();
+</script>
+</body>
+</html>
